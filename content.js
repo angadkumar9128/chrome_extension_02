@@ -20,12 +20,12 @@
     if(paused)return;const r=region();if(!r)return;let newest=null;
     for(const b of blocks(r)){const l=lines(b);if(l.length<2)continue;const speaker=l[0].replace(/\s*\(you\)\s*$/i,'').trim();const text=l.slice(1).join(' ').trim();if(!speaker||!text||speaker.length>80)continue;newest={speaker,text};}
     if(!newest)return;
-    const now=Date.now();
-    const sameSpeaker=active&&active.speaker.toLocaleLowerCase()===newest.speaker.toLocaleLowerCase();
-    const longPause=active&&active.committed&&now-(active.updatedAt||0)>2800;
-    if(sameSpeaker&&!longPause)active.text=MeetNotebookTranscript.mergeRollingText(active.text,newest.text);
+    // Meet updates the same caption block with a growing full-text snapshot.
+    // Keep merging it for the same speaker even after the caption has been stable
+    // for a while; a pause alone does not mean a new caption block/utterance.
+    if(active&&active.speaker.toLocaleLowerCase()===newest.speaker.toLocaleLowerCase())active.text=MeetNotebookTranscript.mergeRollingText(active.text,newest.text);
     else{active={speaker:newest.speaker,text:newest.text,t:elapsed(),committed:false};entries.push(active);}
-    active.updatedAt=now;clearTimeout(stableTimer);stableTimer=setTimeout(()=>{if(active)active.committed=true;publish();},650);publish();
+    active.updatedAt=Date.now();clearTimeout(stableTimer);stableTimer=setTimeout(()=>{if(active)active.committed=true;publish();},650);publish();
   }
   function publish(){if(!sessionId)return;clearTimeout(publishTimer);publishTimer=setTimeout(()=>chrome.runtime.sendMessage({type:'TRANSCRIPT_UPDATE',sessionId,entries}).catch(()=>{}),180);}
   function attach(){const r=region();if(!r)return false;if(hideNativeCaptions)setCaptionVisibility(true);if(observer&&observedRegion===r)return true;observer?.disconnect();observedRegion=r;observer=new MutationObserver(scan);observer.observe(r,{childList:true,characterData:true,subtree:true});scan();return true;}
