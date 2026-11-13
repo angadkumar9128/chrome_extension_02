@@ -18,7 +18,7 @@
   function blocks(r){const out=new Set();r.querySelectorAll('img,[role="img"]').forEach(img=>{let el=img.parentElement;while(el&&el!==r){if(el.querySelectorAll('img,[role="img"]').length>1)break;if(lines(el).length>=2){out.add(el);break;}el=el.parentElement;}});if(!out.size){const root=r.firstElementChild||r;[...root.children].forEach(el=>{if(lines(el).length>=2)out.add(el);});}return [...out];}
   function scan(){
     if(paused)return;const r=region();if(!r)return;let newest=null;
-    for(const b of blocks(r)){const l=lines(b);if(l.length<2)continue;const speaker=l[0].replace(/\s*\(you\)\s*$/i,'').trim();const text=l.slice(1).join(' ').trim();if(!speaker||!text||speaker.length>80)continue;newest={speaker,text};}
+    for(const b of blocks(r)){const l=lines(b);if(l.length<2)continue;const rawSpeaker=l[0].replace(/\s*\(you\)\s*$/i,'').trim();const speaker=/^[A-Z]You$/i.test(rawSpeaker)?'You':rawSpeaker;const text=l.slice(1).join(' ').trim();if(!speaker||!text||speaker.length>80)continue;newest={speaker,text};}
     if(!newest)return;
     // Meet updates the same caption block with a growing full-text snapshot.
     // Keep merging it for the same speaker even after the caption has been stable
