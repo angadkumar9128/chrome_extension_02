@@ -114,7 +114,9 @@ async function loadSessions(){
   }
 }
 async function settings(){
-  const s=await chrome.storage.local.get(['myName','quality','theme','micGain','autoGain','enhanceMic','localTranscription','captionLanguage']);
+  const s=await chrome.storage.local.get(['myName','quality','theme','micGain','autoGain','enhanceMic','localTranscription','localTranscriptionPreferenceVersion','captionLanguage']);
+  // Earlier builds treated an unset preference as enabled; migrate that implicit default to off once.
+  if(s.localTranscriptionPreferenceVersion!==2){await chrome.storage.local.set({localTranscription:false,localTranscriptionPreferenceVersion:2});s.localTranscription=false;}
   $('myName').value=s.myName||'';$('quality').value=s.quality||'high';$('theme').value=s.theme||'system';$('micGain').value=s.micGain??2;$('gainValue').textContent=(Number($('micGain').value)).toFixed(1)+'×';$('autoGain').checked=s.autoGain!==false;$('enhanceMic').checked=s.enhanceMic!==false;$('localTranscription').checked=s.localTranscription===true;$('captionLanguage').value=s.captionLanguage||'en-US';$('hideMeetCaptions').checked=s.hideMeetCaptions!==false;document.body.dataset.theme=s.theme==='system'?'':s.theme;
 }
 $('micGain').oninput=()=>$('gainValue').textContent=Number($('micGain').value).toFixed(1)+'×';
